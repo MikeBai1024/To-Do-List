@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Todo List</title>
+    <style>
+        body {
+            background-color: #f6f6f6;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #3f51b5;
+        }
+
+        .todo-form {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 20px;
+        }
+
+        .todo-input {
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            margin-bottom: 10px;
+        }
+
+        .todo-date {
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            margin-bottom: 10px;
+        }
+
+        .error-message {
+            color: #ff6b6b;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .todo-button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            background-color: #3f51b5;
+            color: #fff;
+            cursor: pointer;
+        }
+
+        .todo-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .todo-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            background-color: #e8e8e8;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .todo-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .todo-item-checkbox {
+            margin-right: 10px;
+        }
+
+        .todo-item-text {
+            flex: 1;
+            color: #3f51b5;
+            font-weight: bold;
+        }
+
+        .todo-item-delete {
+            padding: 5px 10px;
+            border: none;
+            border-radius: 5px;
+            background-color: #ff6b6b;
+            color: #fff;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .todo-item-delete:hover {
+            background-color: #ff4f4f;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1 class="header">Todo List</h1>
+    <form class="todo-form" id="todoForm">
+        <input type="text" class="todo-input" placeholder="Add a new todo" id="todoInput">
+        <input type="date" class="todo-date" id="todoDate">
+        <button type="submit" class="todo-button">Add</button>
+        <div id="errorMessage" class="error-message"></div>
+    </form>
+    <ul class="todo-list" id="todoList"></ul>
+</div>
+<script src="/bbb/jquery/dist/jquery.js"></script>
+<script>
+    $(function() {
+        $('#todoForm').submit(function(event) {
+            event.preventDefault()
+
+            const todoText = $('#todoInput').val().trim()
+            const todoDate = $('#todoDate').val().trim()
+
+            if (!todoText || !todoDate) {
+                $('#errorMessage').text('Please enter both todo name and due date.')
+                return
+            }
+            if (new Date(todoDate) < new Date()) {
+                $('#errorMessage').text('Due date cannot be in the past.')
+                return
+            }
+
+            $('#errorMessage').text('')
+
+            const todoItem = $('<li>').addClass('todo-item')
+            const todoCheckbox = $('<input>').attr({
+                type: 'checkbox',
+                class: 'todo-item-checkbox'
+            })
+            const todoTextEl = $('<span>').addClass('todo-item-text').text(todoText)
+            const todoDateEl = $('<span>').addClass('todo-item-date').text(todoDate)
+            const todoDeleteBtn = $('<button>').addClass('todo-item-delete').text('Delete')
+
+            todoItem.append(todoCheckbox, todoTextEl, todoDateEl, todoDeleteBtn)
+            $('#todoList').append(todoItem)
+
+            $('#todoInput').val('')
+            $('#todoDate').val('')
+
+            $.ajax({
+                type: 'POST',
+                url: '/api/tasks',
+                data: JSON.stringify({
+                    name: todoText,
+                    date: todoDate
+                }),
+                dataType: 'json',
+                contentType: 'application/json',
+                success: function(response) {
+                    console.log(response)
+                },
+                error: function(jqXHR, textStatus, errorThrown) {
+                    console.log(textStatus, errorThrown)
+                }
+            })
+        })
+
+        $(document).on('click', '.todo-item-delete', function() {
+            if (confirm('Are you sure you want to delete this todo?')) {
+                $(this).parent().remove()
+            }
+        })
+    })
+</script>
+</body>
+</html>
